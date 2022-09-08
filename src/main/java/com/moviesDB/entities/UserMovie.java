@@ -2,10 +2,6 @@ package com.moviesDB.entities;
 
 import javax.persistence.*;
 
-import lombok.*;
-import lombok.experimental.Accessors;
-
-
 @Entity
 @Table(name="user_movie")
 public class UserMovie {
