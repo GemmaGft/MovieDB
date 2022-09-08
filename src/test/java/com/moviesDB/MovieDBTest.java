@@ -1,25 +1,33 @@
 package com.moviesDB;
 
+import java.security.Principal;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.hamcrest.core.IsNull;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.moviesDB.entities.UserMovie;
+import com.moviesDB.repository.UserMovieRepository;
 import com.moviesDB.services.MovieService;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -31,6 +39,11 @@ class MovieDBTest {
 
 	@MockBean
 	MovieService movieService;
+
+	@MockBean
+	private UserMovieRepository userMovieRepository;
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@Test
 	void getAllGenres() throws Exception {
@@ -78,8 +91,30 @@ class MovieDBTest {
 	}
 
 	@Test
-	void putFavoritePersonalRatingNotes() {
-		// TODO
+	@WithMockUser
+	void putFavoritePersonalRatingNotes() throws Exception {
+		Integer id = 550;
+		UserMovie userMovie = new UserMovie();
+
+		Principal principal = new Principal() {
+			@Override
+			public String getName() {
+				return "admin";
+			}
+		};
+
+		given(userMovieRepository.findByUsernameAndMovie(principal.getName(), id.toString()))
+				.willReturn(Optional.of(userMovie));
+		given(userMovieRepository.save(userMovie)).willAnswer((invocation) -> invocation.getArgument(0));
+
+		ResultActions response = mockMvc.perform(patch("/api/movie/{movie_id}", id)
+				.contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userMovie)));
+
+		response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.id", is(IsNull.nullValue())))
+				.andExpect(jsonPath("$.username", is("user"))).andExpect(jsonPath("$.movie", is(id.toString())))
+				.andExpect(jsonPath("$.favorite", is(IsNull.nullValue())))
+				.andExpect(jsonPath("$.personal_rating", is(IsNull.nullValue())))
+				.andExpect(jsonPath("$.notes", is(IsNull.nullValue())));
 
 	}
 
