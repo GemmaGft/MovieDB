@@ -27,10 +27,15 @@ public class MovieController {
 	@Autowired
 	UserMovieRepository userMovieRepository;
 
+	@GetMapping("/api/configuration")
+	public HashMap<String, Object> getConfiguration() {
+		return movieService.getConfig();
+	}
+
 	@GetMapping("/api/genre/list")
 	public HashMap<String, Object> findAllGenres() throws IOException {
 		return movieService.findAllGenres();
-		
+
 	}
 
 	@GetMapping("/api/movie/popular")
@@ -47,10 +52,10 @@ public class MovieController {
 	public Object findMovieByID(@AuthenticationPrincipal UserDetails user, @PathVariable int id) {
 		System.out.println(id);
 		String movieid = Integer.toString(id);
-		UserMovie userMovie = userMovieRepository.findByUsernameAndMovie(user.getUsername(), movieid ).orElse(null);
-		
+		UserMovie userMovie = userMovieRepository.findByUsernameAndMovie(user.getUsername(), movieid).orElse(null);
+
 		HashMap<String, Object> movie = movieService.findMovieById(id);
-		if(userMovie != null) {
+		if (userMovie != null) {
 			movie.put("favorite", userMovie.getFavorite());
 			movie.put("personal_rating", userMovie.getPersonal_rating());
 			movie.put("notes", userMovie.getNotes());
@@ -82,23 +87,24 @@ public class MovieController {
 	public HashMap<String, Object> findSimilar(@PathVariable int id) throws IOException {
 		return movieService.findSimilar(id);
 	}
-	
+
 	@PatchMapping("/api/movie/{id}")
-	public ResponseEntity<UserMovie> patchUserMovie(@PathVariable int id, @RequestBody UserMovie userMovie,@AuthenticationPrincipal UserDetails user){
-			String movieid = Integer.toString(id);
-	        UserMovie updatedMovie = userMovieRepository.findByUsernameAndMovie(user.getUsername(), movieid).orElse(null);
-	        if(updatedMovie == null){
-	            updatedMovie = new UserMovie();
-	        }
-	        updatedMovie.setUsername(user.getUsername());
-	        updatedMovie.setMovie(movieid);
-	        updatedMovie.setFavorite(userMovie.getFavorite());
-	        updatedMovie.setPersonal_rating(userMovie.getPersonal_rating());
-	        updatedMovie.setNotes((userMovie.getNotes()));
+	public ResponseEntity<UserMovie> patchUserMovie(@PathVariable int id, @RequestBody UserMovie userMovie,
+			@AuthenticationPrincipal UserDetails user) {
+		String movieid = Integer.toString(id);
+		UserMovie updatedMovie = userMovieRepository.findByUsernameAndMovie(user.getUsername(), movieid).orElse(null);
+		if (updatedMovie == null) {
+			updatedMovie = new UserMovie();
+		}
+		updatedMovie.setUsername(user.getUsername());
+		updatedMovie.setMovie(movieid);
+		updatedMovie.setFavorite(userMovie.getFavorite());
+		updatedMovie.setPersonal_rating(userMovie.getPersonal_rating());
+		updatedMovie.setNotes((userMovie.getNotes()));
 
-	        userMovieRepository.save(updatedMovie);
+		userMovieRepository.save(updatedMovie);
 
-	        return new ResponseEntity<UserMovie>(updatedMovie, HttpStatus.OK);
-	    }
-	
+		return new ResponseEntity<UserMovie>(updatedMovie, HttpStatus.OK);
+	}
+
 }
