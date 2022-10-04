@@ -18,7 +18,6 @@ public class MovieService {
 
 	@Cacheable("configuration")
 	public HashMap<String, Object> getConfig() {
-
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder.path("configuration").queryParam("api_key", api_key).build()).retrieve()
 				.bodyToMono(HashMap.class).block();

@@ -54,7 +54,12 @@ public class UserMovie {
 	public UserMovie() {
 		
 	}
-	
+
+	public UserMovie(String username, String movie) {
+		this.username = username;
+		this.movie = movie;
+	}
+
 	public UserMovie(Long id, String username, String movie, Boolean favorite, Integer personal_rating, String notes) {
 		super();
 		this.id = id;
