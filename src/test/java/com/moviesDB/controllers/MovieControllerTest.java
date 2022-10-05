@@ -371,6 +371,6 @@ class MovieControllerTest {
         given(userMovieRepository.save(userMovieBodyRequest)).willAnswer((invocation ->  invocation.getArgument(0)));
 
         //THEN
-        assertEquals(responseEntity, movieController.patchUserMovie(id, userMovieBodyRequest, user));
+        assertEquals(responseEntity.toString(), movieController.patchUserMovie(id, userMovieBodyRequest, user).toString());
     }
 }

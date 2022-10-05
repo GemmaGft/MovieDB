@@ -1,4 +1,4 @@
-package com.moviesDB.Integration;
+package com.moviesDB.services;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
-class MovieDBServiceTest {
+class MovieServiceIT {
 
     @Autowired
     private WebTestClient webTestClient;

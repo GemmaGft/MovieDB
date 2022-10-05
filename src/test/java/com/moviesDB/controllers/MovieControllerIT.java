@@ -1,7 +1,6 @@
-package com.moviesDB.Integration;
+package com.moviesDB.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moviesDB.controllers.MovieController;
 import com.moviesDB.entities.UserMovie;
 import com.moviesDB.repository.UserMovieRepository;
 import com.moviesDB.services.MovieService;
@@ -34,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)*/
 @WebMvcTest(controllers = MovieController.class)
 @WithMockUser
-class MovieDBTest {
+class MovieControllerIT {
     @Autowired
     MockMvc mockMvc;
     @MockBean

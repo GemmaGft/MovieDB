@@ -13,11 +13,17 @@ public class MovieService {
 
 	WebClient webClient = WebClient.create("https://api.themoviedb.org/3/");
 
-	@Value("${themoviedatabase.api_key}")
-	private String api_key;
+	private String api_key ="2b868b906423d3e47dcc13efbc5a14e1";
+
+	String baseUrl;
+	public MovieService(String baseUrl) {
+		this.baseUrl = baseUrl;
+		webClient = WebClient.create(baseUrl);
+	}
 
 	@Cacheable("configuration")
 	public HashMap<String, Object> getConfig() {
+		System.out.println(api_key);
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder.path("configuration").queryParam("api_key", api_key).build()).retrieve()
 				.bodyToMono(HashMap.class).block();
