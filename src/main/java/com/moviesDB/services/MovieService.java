@@ -11,11 +11,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 @SuppressWarnings("unchecked")
 public class MovieService {
 
-	WebClient webClient = WebClient.create("https://api.themoviedb.org/3/");
+	WebClient webClient;
 
 	private String api_key ="2b868b906423d3e47dcc13efbc5a14e1";
 
 	String baseUrl;
+	public MovieService(){
+		this.baseUrl = "https://api.themoviedb.org/3/";
+		webClient = WebClient.create(baseUrl);
+	}
 	public MovieService(String baseUrl) {
 		this.baseUrl = baseUrl;
 		webClient = WebClient.create(baseUrl);
