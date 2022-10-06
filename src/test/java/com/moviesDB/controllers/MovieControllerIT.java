@@ -1,212 +1,100 @@
-package com.moviesDB.controllers;
+package com.moviesDB.Integration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.moviesDB.entities.UserMovie;
-import com.moviesDB.repository.UserMovieRepository;
-import com.moviesDB.services.MovieService;
-import org.hamcrest.core.IsNull;
+import com.moviesDB.controllers.MovieController;
+import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.mock.web.MockServletContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.Optional;
+import javax.servlet.ServletContext;
 
-import static org.hamcrest.Matchers.is;
-import static org.mockito.BDDMockito.given;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/*@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc(addFilters = false)*/
-@WebMvcTest(controllers = MovieController.class)
-@WithMockUser
-class MovieControllerIT {
+
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = {JdbcDataSource.class})
+@WebAppConfiguration(value = "src/main/java/com/moviesDB/MyMovies1Application.java")
+@AutoConfigureMockMvc(addFilters = false)
+@EnableWebMvc
+public class MovieControllerIT {
+
     @Autowired
-    MockMvc mockMvc;
+    private WebApplicationContext webApplicationContext;
+    @Autowired(required = true)
+    private MockMvc mockMvc;
+
     @MockBean
-    MovieService movieService;
-    @MockBean
-    private UserMovieRepository userMovieRepository;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    WebApplicationContext context;
+    MovieController movieController;
 
     @BeforeEach
-    public void setup() {
-        //this.mockMvc = MockMvcBuilders.standaloneSetup(new WeatherApiController()).build();
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    public void setup() throws Exception {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.webApplicationContext).build();
     }
 
     @Test
-    void getAllGenres() throws Exception {
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("genres", 0);
-
-        given(movieService.findAllGenres()).willReturn(result);
-        ResultActions actions = mockMvc.perform(get("/api/genre/list"));
-
-        actions.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.genres", is(0)));
-
+    public void givenWac_whenServletContext_thenItProvidesMovieController() {
+        ServletContext servletContext = webApplicationContext.getServletContext();
+        assertNotNull(servletContext);
+        assertTrue(servletContext instanceof MockServletContext);
+        assertNotNull(webApplicationContext.getBean(MovieController.class));
     }
 
     @Test
-    void getAllPopularMovies() throws Exception {
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("page", 0);
-        result.put("total_pages", 10);
-        result.put("results", 0);
-        result.put("total_results", 10);
-
-        given(movieService.findPopularMovie()).willReturn(result);
-        ResultActions actions = mockMvc.perform(get("/api/movie/popular"));
-
-        actions.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.page", is(0)));
+    void GIVEN_apiConfiguration_WHEN_MockMvc_THEN_VerifyResponse() throws Exception {
+        //GIVEN
+        ResultActions request = mockMvc.perform(get("/api/configuration"));
+        //WHEN
+        MvcResult mvcResult = request.andDo(print()).andExpect(status().isOk()).andReturn();
+        //THEN
+        assertEquals("application/json", mvcResult.getResponse().getContentType());
     }
 
     @Test
-    @WithMockUser
-    void getMovieById() throws Exception {
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("page", 1);
-        result.put("total_pages", 35032);
-        result.put("results", 0);
-        result.put("total_results", 35032);
-        Integer id = 550;
-
-        given(movieService.findMovieById(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.page", is(1)))
-                .andExpect(jsonPath("$.total_pages", is(35032))).andExpect(jsonPath("$.results", is(0)))
-                .andExpect(jsonPath("$.total_results", is(35032)));
+    void GIVEN_apiGenreList_WHEN_MockMvc_THEN_VerifyResponse() throws Exception {
+        //GIVEN
+        ResultActions request = mockMvc.perform(get("/api/genre/list"));
+        //WHEN
+        MvcResult mvcResult = request.andDo(print()).andExpect(status().isOk()).andReturn();
+        //THEN
+        assertEquals("application/json", mvcResult.getResponse().getContentType());
     }
 
     @Test
-    @WithMockUser
-    void putFavoritePersonalRatingNotes() throws Exception {
-        Integer id = 550;
-        UserMovie userMovie = new UserMovie();
-
-        Principal principal = new Principal() {
-            @Override
-            public String getName() {
-                return "admin";
-            }
-        };
-
-        given(userMovieRepository.findByUsernameAndMovie(principal.getName(), id.toString()))
-                .willReturn(Optional.of(userMovie));
-        given(userMovieRepository.save(userMovie)).willAnswer((invocation) -> invocation.getArgument(0));
-
-        ResultActions response = mockMvc.perform(patch("/api/movie/{movie_id}", id)
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(userMovie)));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.id", is(IsNull.nullValue())))
-                .andExpect(jsonPath("$.username", is("user"))).andExpect(jsonPath("$.movie", is(id.toString())))
-                .andExpect(jsonPath("$.favorite", is(IsNull.nullValue())))
-                .andExpect(jsonPath("$.personal_rating", is(IsNull.nullValue())))
-                .andExpect(jsonPath("$.notes", is(IsNull.nullValue())));
-
+    void GIVEN_apiPopular_WHEN_MockMvc_THEN_VerifyResponse() throws Exception {
+        //GIVEN
+        ResultActions request = mockMvc.perform(get("/api/movie/popular"));
+        //WHEN
+        MvcResult mvcResult = request.andDo(print()).andExpect(status().isOk()).andReturn();
+        //THEN
+        assertEquals("application/json", mvcResult.getResponse().getContentType());
     }
 
-    @Test
-    void findCredits() throws Exception {
-        Integer id = 550;
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("cast", 1);
-        result.put("id", id);
-        result.put("crew", 0);
-
-        given(movieService.findCredits(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}/credit", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.cast", is(1)))
-                .andExpect(jsonPath("$.id", is(id))).andExpect(jsonPath("$.crew", is(0)));
+    @ParameterizedTest
+    @CsvSource(value = {"/api/movie/popular", "/api/genre/list", "/api/configuration"})
+    void GIVEN_apiURL_WHEN_MockMvc_THEN_VerifyResponse(String uri) throws Exception {
+        //GIVEN
+        ResultActions request = mockMvc.perform(get(uri));
+        //WHEN
+        MvcResult mvcResult = request.andDo(print()).andExpect(status().isOk()).andReturn();
+        //THEN
+        assertEquals("application/json", mvcResult.getResponse().getContentType());
     }
-
-    @Test
-    void getImages() throws Exception {
-        Integer id = 550;
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("backdrops", 1);
-        result.put("posters", 0);
-        result.put("id", id);
-        result.put("logos", 0);
-
-        given(movieService.findImage(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}/images", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.backdrops", is(1)))
-                .andExpect(jsonPath("$.posters", is(0))).andExpect(jsonPath("$.id", is(id)))
-                .andExpect(jsonPath("$.logos", is(0)));
-    }
-
-    @Test
-    void getKeywords() throws Exception {
-        Integer id = 550;
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("keywords", 1);
-        result.put("id", id);
-
-        given(movieService.findKeywords(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}/keywords", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.keywords", is(1)))
-                .andExpect(jsonPath("$.id", is(id)));
-    }
-
-    @Test
-    void getRecommendations() throws Exception {
-        Integer id = 550;
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("page", 1);
-        result.put("total_pages", 35032);
-        result.put("results", 0);
-        result.put("total_results", 35032);
-
-        given(movieService.findRecommendation(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}/recommendations", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.page", is(1)))
-                .andExpect(jsonPath("$.total_pages", is(35032))).andExpect(jsonPath("$.results", is(0)))
-                .andExpect(jsonPath("$.total_results", is(35032)));
-    }
-
-    @Test
-    void getSimilar() throws Exception {
-        Integer id = 550;
-        HashMap<String, Object> result = new HashMap<>();
-        result.put("page", 1);
-        result.put("total_pages", 35032);
-        result.put("results", 0);
-        result.put("total_results", 35032);
-
-        given(movieService.findSimilar(id)).willReturn(result);
-
-        ResultActions response = mockMvc.perform(get("/api/movie/{movie_id}/similar", id));
-
-        response.andExpect(status().isOk()).andDo(print()).andExpect(jsonPath("$.page", is(1)))
-                .andExpect(jsonPath("$.total_pages", is(35032))).andExpect(jsonPath("$.results", is(0)))
-                .andExpect(jsonPath("$.total_results", is(35032)));
-    }
-
 }
